@@ -11,8 +11,10 @@ eventListener();
 
 function eventListener() {//eventleri ekleme metodu
     form.addEventListener("submit", addTodo);
-    document.addEventListener("DOMContentLoaded",loadAllTodoToUI());
-
+    document.addEventListener("DOMContentLoaded", loadAllTodoToUI);
+    secondCardBody.addEventListener("click", deleteTodo);
+    filter.addEventListener("keyup", filterTodos);
+    clearButton.addEventListener("click", clearAllTodos);
 }
 
 function getTodoFromStorage() { //todos yoksa oluşturuyor ve todos dizisini dönüyor
@@ -26,6 +28,24 @@ function getTodoFromStorage() { //todos yoksa oluşturuyor ve todos dizisini dö
     return todos;
 }
 
+/*
+    function isTodoAvaliable(newTodo) {
+
+    const listItems = document.querySelectorAll(".list-group-item");
+    
+    listItems.forEach(function (listItem) {
+        let text = listItem.textContent;
+        text = text.trim();
+        newTodo = newTodo.trim();
+        console.log(typeof text,typeof newTodo)
+        if (text !=  newTodo) {
+            return false;
+        }
+    });
+    
+    return true;
+}
+*/
 
 
 function addTodo(e) {
@@ -33,22 +53,20 @@ function addTodo(e) {
     if (newTodo === null || newTodo === "") {
         showMessage("danger", "Lütfen bir todo girin !");
     } else {
-        addTodoToStorage(newTodo);
-        addTodoToUI(newTodo);
-        showMessage("success", "Todo Başarıyla Eklendi !");
+            addTodoToStorage(newTodo);
+            addTodoToUI(newTodo);
+            showMessage("success", "Todo Başarıyla Eklendi !");
     }
-
-
 
     e.preventDefault();
 }
 
-function loadAllTodoToUI(){//Storage dan UI ye yükleme
-   let todos = getTodoFromStorage();
-   
-   todos.forEach(element => {
+function loadAllTodoToUI() {//Storage dan UI ye yükleme
+    let todos = getTodoFromStorage();
+
+    todos.forEach(element => {
         addTodoToUI(element);
-   });
+    });
 }
 
 function addTodoToStorage(newTodo) { //Todoları storage ekler
@@ -63,8 +81,9 @@ function addTodoToStorage(newTodo) { //Todoları storage ekler
 
 function addTodoToUI(newTodo) {//Arayüze ekeleme metodu
 
-    /*--LİSTENİN YAPISI--
-        <!-- 
+    /*
+    --LİSTENİN YAPISI--
+    <!-- 
         <li class="list-group-item d-flex justify-content-between">
         Todo 1
         <a href = "#" class ="delete-item"><i class = "fa fa-remove"></i></a>
@@ -72,6 +91,7 @@ function addTodoToUI(newTodo) {//Arayüze ekeleme metodu
     */
 
     //liste itemini oluşturma
+    
     const listItem = document.createElement("li");
     listItem.className = "list-group-item d-flex justify-content-between";
     //link i oluşturma
@@ -89,6 +109,63 @@ function addTodoToUI(newTodo) {//Arayüze ekeleme metodu
 
 }
 
+function deleteTodo(e) {
+    if (e.target.className === "fa fa-remove") {
+        let todo = e.target.parentElement.parentElement.textContent;
+        e.target.parentElement.parentElement.remove();
+        deleteTodoFromStorage(e.target.parentElement.parentElement.textContent.trim());
+        showMessage("success", `'${todo}'- Silindi !`);
+    }
+}
+
+
+function deleteTodoFromStorage(deleteTodo) {
+    let todos = getTodoFromStorage();
+
+    todos.forEach(function (todo, index) {
+        //todo = String(todo);
+        //deleteTodo = String(deleteTodo);
+        if (todo === deleteTodo) {
+            todos.splice(index, 1);
+        }
+    });
+
+    localStorage.setItem("todos", JSON.stringify(todos));//yeni listeyi ile storage ı güncelliyoruz
+}
+
+function filterTodos(e) {
+    const filterValue = e.target.value.toLowerCase();//inputtan veriyi alma ve küçük harf yapma
+    const listItems = document.querySelectorAll(".list-group-item");
+
+    listItems.forEach(function (listItem) {
+        const text = listItem.textContent.toLowerCase();//list içinden veriyi alma
+
+        if (text.indexOf(filterValue) === -1) {
+            listItem.setAttribute("style", "display: none !important");
+
+        } else {
+            listItem.setAttribute("style", "display : block");
+        }
+    });
+
+}
+
+function clearAllTodos(e) {
+    if (confirm("Tüm Todoları silmek istediğinize emin misiniz ?")) {
+        //Arayüzden todoları temizleme
+        //todoList.innerHTML = ""; //Geçerli fakat yavaş bir yöntem
+        while (todoList.firstElementChild != null) {
+            todoList.removeChild(todoList.firstElementChild);
+        }
+        //localstorage ı temizleme
+        localStorage.removeItem("todos");
+
+        showMessage("success", "Tüm Todolar Silindi !");
+    }
+}
+
+
+
 function showMessage(type, message) {
 
     /* <div class="alert alert-danger" role="alert">
@@ -99,7 +176,6 @@ function showMessage(type, message) {
     alert.textContent = message;
     firstCardBody.appendChild(alert);
 
-    //setTimeout: belli bir zaman içinde yapılcak olan işlemler yazılır
 
     setTimeout(function () {
         alert.remove();
